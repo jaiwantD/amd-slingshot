@@ -7,10 +7,10 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: us-central1 # Update this to your preferred region, e.g., asia-south1
+  REGION: asia-south1 # Update this to your preferred region, e.g., asia-south1
   SERVICE_NAME: neon-labs-frontend
   # The generic location where the image is stored in Artifact Registry
-  IMAGE_URL: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/neon-labs-frontend
+  IMAGE_URL: asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/neon-labs-frontend
 
 jobs:
   deploy:
@@ -34,7 +34,7 @@ jobs:
     # 3. Configure Docker to use Google Artifact Registry
     - name: Authorize Docker Push
       run: |
-        gcloud auth configure-docker us-central1-docker.pkg.dev
+        gcloud auth configure-docker asia-south1-docker.pkg.dev
 
     # 4. Build the Docker Image
     - name: Build Docker Image
