@@ -1,0 +1,57 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main  # Set this to your primary repository branch (main or master)
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1 # Update this to your preferred region, e.g., asia-south1
+  SERVICE_NAME: neon-labs-frontend
+  # The generic location where the image is stored in Artifact Registry
+  IMAGE_URL: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/neon-labs-frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # 1. Authenticate with Google Cloud using a securely stored Service Account Key
+    - name: Google Auth
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    # 2. Set up Google Cloud SDK
+    - name: Setup Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    # 3. Configure Docker to use Google Artifact Registry
+    - name: Authorize Docker Push
+      run: |
+        gcloud auth configure-docker us-central1-docker.pkg.dev
+
+    # 4. Build the Docker Image
+    - name: Build Docker Image
+      run: |
+        docker build -t ${{ env.IMAGE_URL }}:${{ github.sha }} .
+
+    # 5. Push Image to Artifact Registry
+    - name: Push Docker Image
+      run: |
+        docker push ${{ env.IMAGE_URL }}:${{ github.sha }}
+
+    # 6. Deploy the Image to Cloud Run
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy ${{ env.SERVICE_NAME }} \
+          --image ${{ env.IMAGE_URL }}:${{ github.sha }} \
+          --region ${{ env.REGION }} \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080
